@@ -79,15 +79,41 @@ all_tweets_testing <- all_tweets
 #as.factor(all_tweets$account_language)
 #cdata$good_bad_21<-as.factor(ifelse(cdata$good_bad_21 == 1, "Good", "Bad"))  ## we create a factor, and code it as good or bad 
 
-#op <- par(mfrow=c(1,2), new=TRUE)
+op <- par(mfrow=c(1,2), new=TRUE)
 #plot(as.numeric(all_tweets$malicious), ylab="Malicious-NonMalicious", xlab="n", main="Malicious~NonMalicious")
 hist(as.numeric(all_tweets$malicious), breaks =2, xlab="Non-Malicious(0) and Malicious(1)", col="blue", main="Non-Malicious vs. Malicious Tweets")
 #help(hist)
+hist(all_tweets$follower_count)
+hist(all_tweets$following_count)
+hist(all_tweets$is_reply)
+hist(all_tweets$is_quote)
+hist(all_tweets$is_Retweet)
+hist(all_tweets$retweet_count)
+summary(all_tweets$retweet_count)
+hist(all_tweets$like_count)
+summary(all_tweets$like_count)
+hist(all_tweets$user_has_reported_location)
+hist(all_tweets_testing$tweet_lang_russian)
+mean(all_tweets_testing$tweet_lang_russian)
+hist(all_tweets_testing$tweet_lang_english)
+mean(all_tweets_testing$tweet_lang_english)
+hist(all_tweets$has_hashtags)
+hist(all_tweets$num_hashtags)
+hist(all_tweets$has_urls)
+hist(all_tweets$num_urls)
+hist(all_tweets$has_user_mentions)
+hist(all_tweets$num_user_mentions)
+hist(all_tweets$diff_tweet_acct_creation_time)
+
+#hist(all_tweets_testing[all_tweets_testing$tweet_lang_english == 1,]$malicious, breaks =2)
+#hist(all_tweets_testing[all_tweets_testing$tweet_lang_russian == 1,]$malicious, breaks =2)
+par(mfrow=c(1,1))
+#boxplot(all_tweets[all_tweets$tweet_lang_english == 1,]$malicious,all_tweets[all_tweets$tweet_lang_english == 0,]$malicious,
+#				all_tweets[all_tweets$tweet_lang_russian == 1,]$malicious,all_tweets[all_tweets$tweet_lang_russian == 0,]$malicious)
 mnpct <- function(x, y=all_tweets$malicious){
 	mt <- as.matrix(table(as.factor(x), as.factor(y))) # x -> independent variable(vector), y->dependent variable(vector)
-	Total <- sum(mt[,1],mt[,2])                        # Total observations
+	Total <- sum((mt[,1]),(mt[,2]))                        # Total observations
 	Total_Pct <- round(Total/sum(mt)*100, 2)          # Total PCT
-	
 	Bad_pct <- round((mt[,1]/sum(mt[,1]))*100, 2)     # PCT of BAd or event or response
 	Good_pct <- round((mt[,2]/sum(mt[,2]))*100, 2)   # PCT of Good or non-event
 	Bad_Rate <- round((mt[,1]/(mt[,1]+mt[,2]))*100, 2) # Bad rate or response rate
@@ -105,41 +131,31 @@ mnpct <- function(x, y=all_tweets$malicious){
 }
 
 # Attribute 1:  follower_count (numerical)
-summary(all_tweets$follower_count)
+summary(all_tweets_testing$follower_count)
 op2<-par(mfrow=c(1,2))
-boxplot(all_tweets$follower_count, ylab="Follower Count", main="Boxplot: Follower Count")
-
+boxplot(all_tweets_testing$follower_count, ylab="Follower Count", main="Boxplot: Follower Count")
 #plot(as.factor(all_tweets_testing$follower_count), all_tweets_testing$malicious, ylab="Malicious-NonMalicious", xlab="Follower Count", main="Follower Count (Before Groupping)")
-all_tweets_testing$follower_count <-as.factor(ifelse(all_tweets$follower_count<=100,'0-100',
-																					ifelse(all_tweets$follower_count<=1000,'100-1000',
-																								 ifelse(all_tweets$follower_count<=10000,'1000-10,000', 
-																								 			 ifelse(all_tweets$follower_count<=100000,'10,000-100,000',
-																								 			 			 ifelse(all_tweets$follower_count<=1000000,'100,000-1,000,000',
-																								 			 			 			 ifelse(all_tweets$follower_count<=10000000,'1,000,000-10,000,000','10,000,000+')))))))
-
 plot(as.factor(all_tweets_testing$follower_count), all_tweets_testing$malicious, ylab="Malicious-NonMalicious", xlab="Follower Count", main="Follower Count (After Groupping)")
-
-
-##  Checking account status
-# Attribute 1:  follower_count (qualitative)
-#-----------------------------------------------------------
-# Checking account status
-#          Status of existing checking account
-#          A11 :      ... <    0 DM
-#          A12 : 0 <= ... <  200 DM
-#          A13 :      ... >= 200 DM /
-#            salary assignments for at least 1 year
-#          A14 : no checking account
-# Function: function to calculate IV, WOE and Efficiency 
-# The idea is to analyse the predictive power of each variable independetly
-A1 <- gbpct(cdata$chk_ac_status_1)
-barplot(A1$WOE, col="brown", names.arg=c(A1$Levels), 
-				main="Score:Checking Account Status",
+follower_count1 = mnpct(all_tweets_testing$follower_count)
+#follower_count1$Good_pct
+sum(is.na(all_tweets_testing$follower_count))
+barplot(follower_count1$WOE, col="brown", names.arg=c(follower_count1$Levels), 
+				main="Score:Follower Count",
 				xlab="Category",
 				ylab="WOE")
 
-barplot(A1$IV, col="brown", names.arg=c(A1$Levels), 
-				main="Score:Checking Account Status",
+barplot(follower_count1$IV, col="brown", names.arg=c(follower_count1$Levels), 
+				main="Score:Follower Count",
 				xlab="Category",
 				ylab="IV")
 
+all_tweets_testing$follower_count <-as.factor(ifelse(all_tweets$follower_count<=100,'0-100',
+																										 ifelse(all_tweets$follower_count<=1000,'100-1000',
+																										 			 ifelse(all_tweets$follower_count<=10000,'1000-10,000', 
+																										 			 			 ifelse(all_tweets$follower_count<=100000,'10,000-100,000',
+																										 			 			 			 ifelse(all_tweets$follower_count<=1000000,'100,000-1,000,000',
+																										 			 			 			 			 ifelse(all_tweets$follower_count<=10000000,'1,000,000-10,000,000','10,000,000+')))))))
+
+
+###SKIP BIVARIATE UNTIL END
+#START ON ML: Logistic Regression, Random Forrest, SVM, Lasso
