@@ -80,7 +80,7 @@ printcp(m2)
 
 # Tree plot
 plot(m2, main="Tree:Recursive Partitioning");text(m2)
-
+#correlation matrix######################88888
 # Better version of plot
 prp(m2,type=2,extra=1,  main="Tree:Recursive Partitioning")
 
