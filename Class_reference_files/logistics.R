@@ -14,7 +14,7 @@ library(stats)
 # Model: Stepwise Logistic Regression Model  # Model: Stepwise Logistic Regression Model  # Model: Stepwise Logistic Regression Model# Model: Stepwise Logistic Regression Model
 
 
-
+help(glm)
 m1 <- glm(good_bad_21~.,data=train,family=binomial())
 
 m1 <- step(m1)

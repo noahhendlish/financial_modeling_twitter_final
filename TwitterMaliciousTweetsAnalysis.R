@@ -82,6 +82,9 @@ all_tweets_final <- data.frame(all_tweets$num, all_tweets$tweetid, all_tweets$fo
 															 all_tweets$num_hashtags, all_tweets$has_urls, all_tweets$num_urls, all_tweets$has_user_mentions, 
 															 all_tweets$num_user_mentions,all_tweets$diff_tweet_acct_creation_time, all_tweets$malicious)
 
+all_tweets_final$account_language <- as.factor(all_tweets_final$account_language)
+all_tweets_final$tweet_language <- as.factor(all_tweets_final$tweet_language)
+
 #In this all data set any variable that starts with "is" --> binary (0 or 1): 1 --> true, 0--> false
 #to classify as factors: "account_language", "tweet_language", "tweet_client"
 #as.factor(all_tweets$account_language)

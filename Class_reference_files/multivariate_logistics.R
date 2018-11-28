@@ -29,7 +29,7 @@ cdata_reduced_1 <- cdata[!myvars]
 # Step 1: Subset quantitative and qualitative variables X.quanti and X.quali
 
 factors <- sapply(cdata_reduced_1, is.factor)
-
+help(sapply)
 cdata_reduced_1$chk_ac_status_1 <- as.factor(cdata_reduced_1$chk_ac_status_1 )
 cdata_reduced_1$purpose_4 <- as.factor(cdata_reduced_1$purpose_4 )
 cdata_reduced_1$savings_ac_bond_6 <- as.factor(cdata_reduced_1$savings_ac_bond_6)
@@ -87,8 +87,6 @@ summary(part)
 
 # K-means clustering of variables
 # We may also cross check the outcomes of hierarchical clustering using K-means variable clustering:
-
-
 kfit<-kmeansvar( X.quali = vars_quali, init=5,
                 iter.max = 150, nstart = 1, matsim = TRUE)
 summary(kfit)
