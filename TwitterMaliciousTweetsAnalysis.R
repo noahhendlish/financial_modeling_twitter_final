@@ -23,7 +23,6 @@ library(bnlearn)     # Bayesian Network Structure Learning, Parameter Learning a
 library(DAAG)        # Data Analysis and Graphics Data and Functions
 library(vcd)         # Visualizing Categorical Data
 library(kernlab)     # Support Vector Machine
-library(readr)
 library(stringr)
 
 #In this all data set any variable that starts with "is" --> binary (0 or 1): 1 --> true, 0--> false
@@ -99,7 +98,7 @@ all_tweets_quanti <- data.frame(all_tweets$follower_count, all_tweets$following_
 														all_tweets$num_user_mentions,all_tweets$diff_tweet_acct_creation_time, all_tweets$malicious)
 
 all_tweets_quali <- data.frame(all_tweets$account_language, all_tweets$tweet_language, all_tweets$tweet_client)
-
+all_tweets_final <- data.frame(c(all_tweets_quali,all_tweets_quanti))
 # MULTIVARIATE ANALYSIS - Dimension(Variable) Reduction using Variable Clustering Approach
 # Clustering of variables is as a way to arrange variables into homogeneous clusters, i.e., groups of variables which are strongly related to each other and thus bring the same information.
 # When we have large number of variables, this should be done well before univariate analysis.
@@ -108,57 +107,104 @@ all_tweets_quali <- data.frame(all_tweets$account_language, all_tweets$tweet_lan
 #CLUSTERING TREE
 #Just Qualitative
 tweets_quali_cluster_tree <- hclustvar(X.quali = all_tweets_quali)
-plot(tweets_quali_cluster_tree, main="variable clustering")
+plot(tweets_quali_cluster_tree, main="variable quali clustering")
 rect.hclust(tweets_quali_cluster_tree, k=2,  border = 1:10)
 summary(tweets_quali_cluster_tree)
-#Qualitative and Quantitative
-#tweets_all_cluster_tree <- hclustvar(X.quali=all_tweets_quali, X.quanti = all_tweets_quanti)
-#plot(tweets_all_cluster_tree, main="variable clustering")
-#rect.hclust(tweets_all_cluster_tree, k=10,  border = 1:10)
-#summary(tweets_all_cluster_tree)
+#just  Quantitative
+tweets_quanti_cluster_tree <- hclustvar(X.quanti = all_tweets_quanti)
+plot(tweets_quanti_cluster_tree, main="variable quanti clustering")
+rect.hclust(tweets_quanti_cluster_tree, k=10,  border = 1:10)
+summary(tweets_quanti_cluster_tree)
 
 # Phylogenetic trees
 library("ape")
+#qualitative
 plot(as.phylo(tweets_quali_cluster_tree), type = "fan",
 		 tip.color = hsv(runif(15, 0.65,  0.95), 1, 1, 0.7),
 		 edge.color = hsv(runif(10, 0.65, 0.75), 1, 1, 0.7), 
 		 edge.width = runif(20,  0.5, 3), use.edge.length = TRUE, col = "gray80")
 summary.phylo(as.phylo(tweets_quali_cluster_tree))
-stab<-stability(tweets_quali_cluster_tree,B=50) # Bootstrap 50 times
+stab_quali<-stability(tweets_quali_cluster_tree,B=50) # Bootstrap 50 times
 # plot(stab,main="Stability of the partitions")
-boxplot(stab$matCR)
-part<-cutreevar(tweets_quali_cluster_tree,10)
-print(part)
-summary(part)
+boxplot(stab_quali$matCR)
+part_quali<-cutreevar(tweets_quali_cluster_tree,10)
+print(part_quali)
+summary(part_quali)
 
+#quantitative
+plot(as.phylo(tweets_quanti_cluster_tree), type = "fan",
+     tip.color = hsv(runif(15, 0.65,  0.95), 1, 1, 0.7),
+     edge.color = hsv(runif(10, 0.65, 0.75), 1, 1, 0.7), 
+     edge.width = runif(20,  0.5, 3), use.edge.length = TRUE, col = "gray80")
+summary.phylo(as.phylo(tweets_quanti_cluster_tree))
+stab_quanti<-stability(tweets_quanti_cluster_tree,B=50) # Bootstrap 50 times
+# plot(stab,main="Stability of the partitions")
+boxplot(stab_quanti$matCR)
+part_quanti<-cutreevar(tweets_quanti_cluster_tree,10)
+print(part_quanti)
+summary(part_quanti)
+
+plot(tweets_quanti_cluster_tree, as.factor(kfit_quanti$cluster), type = "index")
+plot(tweets_quanti_cluster_tree, as.factor(kfit_quanti$cluster), type = "tree")
 # K-means clustering of variables
 # We may also cross check the outcomes of hierarchical clustering using K-means variable clustering:
-kfit<-kmeansvar( X.quali = tweets_quali_cluster_tree, init=5,
-								 iter.max = 150, nstart = 1, matsim = TRUE)
-summary(kfit)
-plot(tweets_quali_cluster_tree, as.factor(kfit$cluster))
-kfit$E
+#qualitative
+###NEED TO CHANGE B/C TWEET LANG AND ACCT LANG have SAME CATEGORIES 
+#help(kmeansvar)
+#kfit_quali<-kmeansvar(X.quali = all_tweets_quali,iter.max = 150, matsim = TRUE)
+#kfit_quali<-kmeansvar(X.quali = all_tweets_quali,iter.max = 150, init =2, nstart =1, matsim = TRUE, rename.level = TRUE)
+#summary(kfit_quali)
+#plot(all_tweets_quali, as.factor(kfit_quali$cluster))
+#kfit_quali$E
+#quantitative
+#kfit_quanti<-kmeansvar( X.quanti = all_tweets_quanti, init=5, iter.max = 150, nstart = 1, matsim = TRUE)
+kfit_quanti<-kmeansvar( X.quanti = all_tweets_quanti, init = 5, iter.max = 150, nstart= 1, matsim = TRUE)
+summary(kfit_quanti)
+plot(all_tweets_quanti, as.factor(kfit_quanti$cluster))
+kfit_quanti$E
 
 ######### Sampling  ##################### Sampling  ##################### Sampling  ############
-
 #Random Sampling (Train and Test)
 #We may split the data (given population) into random samples with 50-50, 60-40 or 70-30 ratios
 # for Training (Development Sample on which model will be developed or trained) and Test (validation/holdout sample on which model will be tested) based on population size.
 #In this exercise we will split the sample into 70-30. You may perform this step even before Univariate analysis.
-
+install.packages('rapportools')
+library(rapportools)
+library(stats)
+library(plyr)
 #Simple random sampling is the most basic sampling technique where we select a group of subjects (a sample) for study from a larger group (a population).
 # Each individual is chosen entirely by chance and each member of the population has an equal chance of being included in the sample.
-div_part <- sort(sample(nrow(cdata_reduced_2), nrow(cdata_reduced_2)*.7))  ## sample from total rows, a fraction
+div_part <- sort(sample(nrow(all_tweets_final), nrow(all_tweets_final)*.7))  ## sample from total rows, a fraction
 #select training sample 
-train<-cdata_reduced_2[div_part,] # 70% here
-pct(train$good_bad_21)
+train<-all_tweets_final[div_part,] # 70% here
+train_headers = c( "account_language", "tweet_language", "tweet_client", "follower_count" ,"following_count",
+               "is_reply",  "is_quote","is_Retweet", "retweet_count", "like_count","user_has_reported_location", 
+                "acct_tweet_lang_same", "tweet_lang_english","tweet_lang_russian", "has_hashtags","num_hashtags",
+                "has_urls", "num_urls", "has_user_mentions", "num_user_mentions",            
+                "diff_tweet_acct_creation_time", "malicious")
+colnames(train)<- train_headers
+#length(which(train$malicious == 0))
+#help(count)
+#count(df = train, vars =0)
+#non_malicious_in_train <- all_tweets_final$malicious[which(all_tweets_final$malicious==0),]
+non_malicious_in_train <- subset(x=train, train$malicious ==0)
+malicious_in_train <- subset(x=train, train$malicious ==1)
+percent_of_malicious_in_train = nrow(malicious_in_train)/nrow(train)
 # put remaining into test sample
-test<-cdata_reduced_2[-div_part,] # rest of the 30% data goes here
-pct(test$good_bad_21)
+test<-all_tweets_final[-div_part,] # rest of the 30% data goes here
+non_malicious_in_test<- subset(x=train, train$malicious ==0)
+malicious_in_test <- subset(x=train, train$malicious ==1)
+percent_of_malicious_in_test = nrow(malicious_in_test)/nrow(test)
+summary(div_part)
 
+# Model: Stepwise Logistic Regression Model  # Model: Stepwise Logistic Regression Model  # Model: Stepwise Logistic Regression Model# Model: Stepwise Logistic Regression Model
+#malicious~.
+summary(good_bad_21)
 
-
-
+help(glm)
+m1 <- glm(malicious~.,data=train,family=binomial())
+m1 <- step(m1)
+summary(m1)
 
 
 

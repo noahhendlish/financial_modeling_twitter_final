@@ -131,7 +131,6 @@ div_part <- sort(sample(nrow(cdata_reduced_2), nrow(cdata_reduced_2)*.7))  ## sa
 #select training sample 
 
 train<-cdata_reduced_2[div_part,] # 70% here
-
 pct(train$good_bad_21)
 
 
