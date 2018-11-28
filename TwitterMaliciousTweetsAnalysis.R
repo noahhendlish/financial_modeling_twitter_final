@@ -67,7 +67,7 @@ all_tweets$tweet_lang_english <-  as.numeric(all_tweets$tweet_lang_english)
 all_tweets$tweet_lang_russian <-  as.numeric(all_tweets$tweet_lang_russian)
 all_tweets$has_hashtags <-  as.numeric(all_tweets$has_hashtags)
 all_tweets$num_hashtags <-  as.numeric(all_tweets$num_hashtags)
-all_tweets$has_urls <-  as.numeric(all_tweets$has_urls)
+all_tweets$num_urls <-  as.numeric(all_tweets$num_urls)
 all_tweets$has_urls <-  as.numeric(all_tweets$has_urls)
 all_tweets$has_user_mentions <-  as.numeric(all_tweets$has_user_mentions)
 all_tweets$num_user_mentions <-  as.numeric(all_tweets$num_user_mentions)
@@ -209,6 +209,37 @@ regression3 <- glm(malicious~  tweet_client+follower_count+following_count+is_re
 summary(regression1)
 summary(regression2)
 summary(regression3)
+
+# List of significant variables and features with p-value <0.01
+significant.variables <- summary(regression3)$coeff[-1,4] < 0.01
+names(significant.variables)[significant.variables == TRUE]
+prob <- predict(regression3, type = "response")
+res <- residuals(regression3, type = "deviance")
+
+## CIs using profiled log-likelihood
+confint(regression3)
+
+## CIs using standard errors
+confint.default(regression3)
+## odds ratios and 95% CI
+exp(cbind(OR = coef(regression3), confint(regression3)))
+
+#score test data set
+#test$m1_score <- predict(regression3,type='response',test)
+#m1_pred <- prediction(test$m1_score, test$good_bad_21)
+#m1_perf <- performance(m1_pred,"tpr","fpr")
+
+#ROC
+#par(mfrow=c(1,1))
+#plot(m1_perf, lwd=2, colorize=TRUE, main="ROC m1: Logistic Regression Performance")
+#lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
+#lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
+
+# Plot precision/recall curve
+#m1_perf_precision <- performance(m1_pred, measure = "prec", x.measure = "rec")
+
+plot(m1_perf_precision, main="m1 Logistic:Precision/recall curve")
+
 
 
 
