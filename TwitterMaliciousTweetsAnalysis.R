@@ -74,6 +74,14 @@ all_tweets_numeric_only <- data.frame(all_tweets$num, all_tweets$tweetid, all_tw
 														all_tweets$num_user_mentions,all_tweets$diff_tweet_acct_creation_time, all_tweets$malicious)
 
 all_tweets_testing <- all_tweets
+all_tweets_final <- data.frame(all_tweets$num, all_tweets$tweetid, all_tweets$follower_count, all_tweets$following_count, 
+															 all_tweets$account_language, all_tweets$tweet_language, all_tweets$tweet_client,
+															 all_tweets$is_reply,  all_tweets$is_quote, all_tweets$is_Retweet, all_tweets$retweet_count, 
+															 all_tweets$like_count, all_tweets$user_has_reported_location, all_tweets$acct_tweet_lang_same,         
+															 all_tweets$tweet_lang_english,all_tweets$tweet_lang_russian, all_tweets$has_hashtags,
+															 all_tweets$num_hashtags, all_tweets$has_urls, all_tweets$num_urls, all_tweets$has_user_mentions, 
+															 all_tweets$num_user_mentions,all_tweets$diff_tweet_acct_creation_time, all_tweets$malicious)
+
 #In this all data set any variable that starts with "is" --> binary (0 or 1): 1 --> true, 0--> false
 #to classify as factors: "account_language", "tweet_language", "tweet_client"
 #as.factor(all_tweets$account_language)
@@ -83,6 +91,12 @@ op <- par(mfrow=c(1,2), new=TRUE)
 #plot(as.numeric(all_tweets$malicious), ylab="Malicious-NonMalicious", xlab="n", main="Malicious~NonMalicious")
 hist(as.numeric(all_tweets$malicious), breaks =2, xlab="Non-Malicious(0) and Malicious(1)", col="blue", main="Non-Malicious vs. Malicious Tweets")
 #help(hist)
+
+###SKIP BIVARIATE UNTIL END
+#START ON ML: Logistic Regression, Random Forrest, SVM, Lasso
+
+
+######DATA ANALYSIS AND BIVARIATE ANALYSIS#######
 hist(all_tweets$follower_count)
 hist(all_tweets$following_count)
 hist(all_tweets$is_reply)
@@ -109,7 +123,7 @@ hist(all_tweets$diff_tweet_acct_creation_time)
 #hist(all_tweets_testing[all_tweets_testing$tweet_lang_russian == 1,]$malicious, breaks =2)
 par(mfrow=c(1,1))
 #boxplot(all_tweets[all_tweets$tweet_lang_english == 1,]$malicious,all_tweets[all_tweets$tweet_lang_english == 0,]$malicious,
-#				all_tweets[all_tweets$tweet_lang_russian == 1,]$malicious,all_tweets[all_tweets$tweet_lang_russian == 0,]$malicious)
+#all_tweets[all_tweets$tweet_lang_russian == 1,]$malicious,all_tweets[all_tweets$tweet_lang_russian == 0,]$malicious)
 mnpct <- function(x, y=all_tweets$malicious){
 	mt <- as.matrix(table(as.factor(x), as.factor(y))) # x -> independent variable(vector), y->dependent variable(vector)
 	Total <- sum((mt[,1]),(mt[,2]))                        # Total observations
@@ -157,5 +171,4 @@ all_tweets_testing$follower_count <-as.factor(ifelse(all_tweets$follower_count<=
 																										 			 			 			 			 ifelse(all_tweets$follower_count<=10000000,'1,000,000-10,000,000','10,000,000+')))))))
 
 
-###SKIP BIVARIATE UNTIL END
-#START ON ML: Logistic Regression, Random Forrest, SVM, Lasso
+
