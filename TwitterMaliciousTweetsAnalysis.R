@@ -233,8 +233,8 @@ regression1 <-glm(malicious~.,data=train_all,family=binomial())
 regression2 <- glm(malicious~  tweet_client+follower_count+following_count+is_reply+is_quote +is_Retweet +retweet_count+like_count+user_has_reported_location+acct_tweet_lang_same+tweet_lang_english+tweet_lang_russian+num_hashtags+ num_urls+num_user_mentions+diff_tweet_acct_creation_time,data=train,family=binomial())
 regression3 <- glm(malicious~  tweet_client+follower_count+following_count+is_reply+is_quote +is_Retweet +retweet_count+like_count+user_has_reported_location+acct_tweet_lang_same+tweet_language+num_hashtags+ num_urls+num_user_mentions+diff_tweet_acct_creation_time,data=train,family=binomial())
 regression4 <- glm(malicious~  follower_count+following_count+is_reply+is_quote +is_Retweet +retweet_count+like_count+user_has_reported_location+acct_tweet_lang_same+tweet_lang_english+tweet_lang_russian+num_hashtags+ num_urls+num_user_mentions+diff_tweet_acct_creation_time,data=train,family=binomial())
-regression_sig <-glm(malicious~.,data=train_sig,family=binomial())
-m1 <-glm(malicious~.,data=train_sig,family=binomial())
+regression_sig <-glm(malicious~.,data=train,family=binomial())
+m1 <-glm(malicious~.,data=train,family=binomial())
 summary(m1)
 summary(regression1)
 summary(regression2)
@@ -288,9 +288,6 @@ plot(m1_perf_precision, main="m1 Logistic:Precision/recall curve")
 #confusionMatrix(factor(m1_pred),factor(m1_perf_precision))
 
 ### Partitioning ######## Partitioning ######## Partitioning ######## Partitioning ######## Partitioning #####
-### Partitioning ######## Partitioning ######## Partitioning ######## Partitioning ######## Partitioning #####
-### Partitioning ######## Partitioning ######## Partitioning ######## Partitioning ######## Partitioning #####
-### Partitioning ######## Partitioning ######## Partitioning ######## Partitioning ######## Partitioning #####
 
 #Basic recursive partitioning
 library(rpart)
@@ -317,7 +314,7 @@ test_factor1 <- as.factor(test_factor1)
 train_factor1 <- as.factor(train_factor1)
 
 m2 <- rpart(malicious~.,data=train)
-m2_a <- rpart(malicious~.,data=train_sig)
+#m2_a <- rpart(malicious~.,data=train)
 m2_b <- rpart(malicious~.,data=train_factor)
 
 # Print tree detail
@@ -472,7 +469,6 @@ lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
 
 
 
-
 ####### BAyesian Network#############
 library(bnlearn)
 train_2<-train
@@ -503,11 +499,36 @@ bn3 <- fast.iamb(train_2_1)
 bn3
 bn4 <- inter.iamb(train_2_1)
 
-#train_2_2 <- data.frame(train_2$is_reply,train_2$is_quote,train_2$is_Retweet,train_2$user_has_reported_location,train_2$acct_tweet_lang_same, train_2$tweet_language,train_2$tweet_client, train_2$malicious)
+######HILL CLIMBING ######
 compare(bn.gs, bn2)
 #On the other hand hill-climbing results in a completely directed network, which differs from
 #the previous one because the arc between A and B is directed (A ! B instead of A  B).
-bn.hc <- hc(train_2_1, score = "aic")
+#train_2_2$follower_count, train_2_2$following_count, train_2_2$retweet_count,
+#train_2_2$like_count, train_2_2$num_hashtags,train_2_2$num_urls,
+#train_2_2$num_user_mentions,
+#train_2_2$is_reply,train_2_2$is_quote,train_2_2$is_Retweet,
+#ttrain_2_2$user_has_reported_location,train_2_2$acct_tweet_lang_same, 
+#train_2_2$diff_tweet_acct_creation_time, train_2_2$malicious
+names(train)
+train_2_2 <- train_2
+train_2_2 <-subset(x = train_2, select = c(3,4,5,6,7,8,9,10,11,12,13,14,15))
+names(train_2_2)
+train_2_2$follower_count <- as.numeric(train_2_2$follower_count)
+train_2_2$following_count <- as.numeric(train_2_2$following_count)
+train_2_2$retweet_count <- as.numeric(train_2_2$retweet_count)
+train_2_2$like_count <- as.numeric(train_2_2$like_count)
+train_2_2$num_hashtags <- as.numeric(train_2_2$num_hashtags)
+train_2_2$num_urls <- as.numeric(train_2_2$num_urls)
+train_2_2$num_user_mentions <- as.numeric(train_2_2$num_user_mentions)
+train_2_2$is_reply <- as.numeric(train_2_2$is_reply)
+train_2_2$is_quote <- as.numeric(train_2_2$is_quote)
+train_2_2$is_Retweet <- as.numeric(train_2_2$is_Retweet)
+train_2_2$user_has_reported_location <- as.numeric(train_2_2$user_has_reported_location)
+train_2_2$acct_tweet_lang_same <- as.numeric(train_2_2$acct_tweet_lang_same)
+train_2_2$diff_tweet_acct_creation_time <- as.numeric(train_2_2$diff_tweet_acct_creation_time)
+train_2_2 <- na.omit(train_2_2)
+bn.hc <- hc(train_2_2, score = "aic")
+#only works with discrete data... doesnt work.
 bn.hc
 opm5<-par(mfrow = c(1,2))
 plot(bn.gs, main = "Constraint-based algorithms")
@@ -517,9 +538,32 @@ fitted2 = bn.fit(res2, train_2)
 fitted2
 
 ##########SVM#############
+library(kernlab) #for SVM..always explore the library!
+# Basic Model
+m3 <- ksvm(Survived ~ Pclass + Age + gender + SibSp + Parch + Fare + Embarked + Cabin_level, data = train, kernel = "vanilladot")
+test2 <- na.omit(test)
+test2$m3_score <- predict(m3, test2[,1:14], type="response")
+m3_pred <- prediction(test2$m3_score, test2$Survived)
+m3_perf <- performance(m3_pred,"tpr","fpr")
 
+# Plot ROC curve
+m3_perf <- performance(m3_pred, measure = "tpr", x.measure = "fpr")
+plot(m3_perf, colorize=TRUE, lwd=2, main="SVM:Plot ROC curve - Vanilladot")
+lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
+lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
 
+## Random forrest
+library(party)
+set.seed(123456742)
+m4 <- cforest(Survived~Pclass + Age + gender + SibSp + Parch + Fare + Embarked + Cabin_level, control = cforest_unbiased(mtry = 2, ntree = 50), data = train)
+m4_fitForest <- predict(m4, newdata = test)
+m4_pred <- prediction( m4_fitForest, test$Survived)
+m4_perf <- performance(m4_pred, "tpr", "fpr")
 
+# Model Performance plot
+plot(m4_perf,colorize=TRUE, lwd=2, main = "m3 ROC: Random Forest", col = "blue")
+lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
+lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
 
 
 #########NEURAL NETS#########
