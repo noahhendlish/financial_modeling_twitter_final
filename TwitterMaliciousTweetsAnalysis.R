@@ -295,22 +295,45 @@ plot(m1_perf_precision, main="m1 Logistic:Precision/recall curve")
 #Basic recursive partitioning
 library(rpart)
 library(kernlab) #for SVM..always explore the library!
+#test1 <- na.exclude(test)
+#train1 <- na.exclude(train)
+train_numeric = train
+test_numeric = test
+test_numeric <- na.omit(test_numeric)
+train_numeric <- na.omit(train_numeric)
+test_numeric$malicious <- as.numeric(test_numeric$malicious)
+train_numeric$malicious <- as.numeric(train_numeric$malicious)
+
+test_factor = test
+train_factor = train
+test_factor <- na.omit(test_factor)
+train_factor <- na.omit(train_factor)
+test_factor$malicious <- as.factor(test_factor$malicious)
+train_factor$malicious <- as.factor(train_factor$malicious)
+
+test_factor1 <- na.omit(test_factor)
+train_factor1 <- na.omit(train_factor)
+test_factor1 <- as.factor(test_factor1)
+train_factor1 <- as.factor(train_factor1)
 
 m2 <- rpart(malicious~.,data=train)
 m2_a <- rpart(malicious~.,data=train_sig)
+m2_b <- rpart(malicious~.,data=train_factor)
 
 # Print tree detail
 printcp(m2)
 printcp(m2_a)
+printcp(m2_b)
 # Tree plot
 plot(m2, main="Tree:Recursive Partitioning");text(m2)
 plot(m2_a, main="Tree:Recursive Partitioning");text(m2_a)
+
 # Better version of plot
 prp(m2,type=2,extra=1,  main="Tree:Recursive Partitioning")
 prp(m2_a,type=2,extra=1,  main="Tree:Recursive Partitioning")
 # score test data
 test2 <- na.omit(test)
-#test$m2_score <- predict(m2, test, type='prob')
+#test$m2_score1 <- predict(m2, test_factor1, type='prob')
 test$m2_score <- predict(m2, test, type='vector')
 #m2_pred <- prediction(test$m2_score[,2],test$malicious)
 m2_pred <- prediction(test$m2_score,test$malicious)
@@ -337,7 +360,7 @@ cat("AUROC: ",m2_AUROC,"\tKS: ", m2_KS, "\tGini:", m2_Gini, "\n")
 
 
 #### Bayesian Partitioning ####
-train_1 = train
+
 # Fit Model 
 #### m2_1 <- rpart(good_bad_21~.,data=train_1,parms=list(prior=c(.9,.1)),cp=.0002) #- build model using 90%-10% priors
 # m2_1 <- rpart(good_bad_21~.,data=train_1,parms=list(prior=c(.8,.2)),cp=.0002) #- build model using 80%-20% priors
@@ -381,9 +404,19 @@ lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
 #################RANDOM FOREST ##################
 test2 <- na.omit(test)
 train2 <- na.omit(train)
+#test2 <- na.exclude(test)
+#train2 <- na.exclude(train)
+test2$malicious <- as.factor(test2$malicious)
+train2$malicious <- as.factor(train2$malicious)
+test3 <- (test2)
+train3 <- (train2)
+#m2 <- rpart(malicious~.,data=train)
+############
 m3 <- randomForest(malicious ~ ., data = train2)
-
+#m3 <- randomForest(malicious ~ ., data = train3, importance=TRUE,prOximity=TRUE,na.action=na.roughfix
+#m3_fitForest <- predict(m3, newdata = test, type="prob")[,2]
 m3_fitForest <- predict(m3, newdata = test, type="prob")[,2]
+#m3_fitForest <- predict(m3, newdata = test, type="regression")[,2]
 m3_pred <- prediction( m3_fitForest, test$malicious)
 m3_perf <- performance(m3_pred, "tpr", "fpr")
 
@@ -423,13 +456,13 @@ cat("AUROC: ",m3_AUROC,"\tKS: ", m3_KS, "\tGini:", m3_Gini, "\n")
 ## Lets use this package
 library(party)
 set.seed(123456742)
-m3_1 <- cforest(good_bad_21~., control = cforest_unbiased(mtry = 2, ntree = 50), data = train)
+m3_1 <- cforest(malicious~., control = cforest_unbiased(mtry = 2, ntree = 50), data = train)
 
 summary(m3_1)
 
 # Model Performance
 m3_1_fitForest <- predict(m3, newdata = test, type = "prob")[,2]
-m3_1_pred <- prediction(m3_1_fitForest, test$good_bad_21)
+m3_1_pred <- prediction(m3_1_fitForest, test$malicious)
 m3_1_perf <- performance(m3_1_pred, "tpr", "fpr")
 
 # Model Performance Plot
@@ -443,24 +476,38 @@ lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
 ####### BAyesian Network#############
 library(bnlearn)
 train_2<-train
-train_2$duration_month_2 <- as.factor(train_2$duration_month_2)
-train_2$credit_amount_5 <- as.factor(train_2$credit_amount_5)
-train_2$instalment_pct_8 <- as.factor(train_2$instalment_pct_8)
-train_2$age_in_yrs_13 <- as.factor(train_2$age_in_yrs_13)
-
-bn.gs <- gs(train_2)
+names(train_2)
+#names:
+#tweet_language                
+#tweet_client    
+train_2_1 = train_2
+train_2_1$follower_count <- as.factor(train_2_1$follower_count)
+train_2_1$following_count <- as.factor(train_2_1$following_count)
+train_2_1$retweet_count <- as.factor(train_2_1$retweet_count)
+train_2_1$like_count <- as.factor(train_2_1$like_count)
+train_2_1$num_hashtags <- as.factor(train_2_1$num_hashtags)
+train_2_1$num_urls <- as.factor(train_2_1$num_urls)
+train_2_1$num_user_mentions <- as.factor(train_2_1$num_user_mentions)
+train_2_1$is_reply <- as.factor(train_2_1$is_reply)
+train_2_1$is_quote <- as.factor(train_2_1$is_quote)
+train_2_1$is_Retweet <- as.factor(train_2_1$is_Retweet)
+train_2_1$user_has_reported_location <- as.factor(train_2_1$user_has_reported_location)
+train_2_1$acct_tweet_lang_same <- as.factor(train_2_1$acct_tweet_lang_same)
+train_2_1$malicious <- as.factor(train_2$malicious)
+train_2_1 <- na.omit(train_2_1)
+bn.gs <- gs(train_2_1)
 bn.gs
-bn2 <- iamb(train_2)
+bn2 <- iamb(train_2_1)
 bn2
-bn3 <- fast.iamb(train_2)
+bn3 <- fast.iamb(train_2_1)
 bn3
-bn4 <- inter.iamb(train_2)
-bn4
+bn4 <- inter.iamb(train_2_1)
 
+#train_2_2 <- data.frame(train_2$is_reply,train_2$is_quote,train_2$is_Retweet,train_2$user_has_reported_location,train_2$acct_tweet_lang_same, train_2$tweet_language,train_2$tweet_client, train_2$malicious)
 compare(bn.gs, bn2)
-#On the other hand hill-climbing results in a completely directed network, which diers from
+#On the other hand hill-climbing results in a completely directed network, which differs from
 #the previous one because the arc between A and B is directed (A ! B instead of A  B).
-bn.hc <- hc(train_2, score = "aic")
+bn.hc <- hc(train_2_1, score = "aic")
 bn.hc
 opm5<-par(mfrow = c(1,2))
 plot(bn.gs, main = "Constraint-based algorithms")
