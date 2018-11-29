@@ -638,7 +638,7 @@ summary.phylo(as.phylo(tweets_quali_cluster_tree))
 stab_quali<-stability(tweets_quali_cluster_tree,B=50) # Bootstrap 50 times
 # plot(stab,main="Stability of the partitions")
 boxplot(stab_quali$matCR)
-part_quali<-cutreevar(tweets_quali_cluster_tree,10)
+part_quali<-cutreevar(tweets_quali_cluster_tree,3)
 print(part_quali)
 summary(part_quali)
 #quantitative
