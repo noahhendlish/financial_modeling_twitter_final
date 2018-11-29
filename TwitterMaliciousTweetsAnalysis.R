@@ -177,6 +177,8 @@ sapply(all_tweets_final,function(x) sum(x == 'undefined'))
 sapply(all_tweets_final,function(x) sum(x == 'other'))
 sapply(all_tweets_final,function(x) sum(x == 'Other'))
 sapply(all_tweets_final, function(x) length(unique(x)))
+sapply(all_tweets_final, sd)
+
 #ONLY TAKE SIGNIFICGANT VARIABLES (COLUMNS)
 all_tweets_sig = all_tweets_final[c(1:nrow(all_tweets_final)),c(2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,19)]
 ######### Sampling  ##################### Sampling  ##################### Sampling  ############
@@ -220,24 +222,30 @@ summary(regression2)
 summary(regression3)
 summary(regression4)
 summary(regression_sig)
+help(anova)
+anova(regression_sig, test="Chisq")
+#likelihood_ratio:
+anova(regression_sig, test="rao")
 
 # List of significant variables and features with p-value <0.01
-significant.variables <- summary(regression3)$coeff[-1,4] < 0.01
+significant.variables <- summary(regression_sig)$coeff[-1,4] < 0.01
 names(significant.variables)[significant.variables == TRUE]
-prob <- predict(regression3, type = "response")
-res <- residuals(regression3, type = "deviance")
+signif_var_names = names(significant.variables)[significant.variables == TRUE]
+prob <- predict(regression_sig, type = "response")
+help(predict)
+res <- residuals(regression_sig, type = "deviance")
 
 ## CIs using profiled log-likelihood
-CI_profile_log_likelihood = confint(regression3)
+CI_profile_log_likelihood = confint(regression_sig)
 summary(CI_profile_log_likelihood)
 ## CIs using standard errors
-CI_using_stderrors = confint.default(regression3)
+CI_using_stderrors = confint.default(regression_sig)
 summary(CI_using_stderrors)
 ## odds ratios and 95% CI
-odd_ratios_95CI = exp(cbind(OR = coef(regression3), confint(regression3)))
+odd_ratios_95CI = exp(cbind(OR = coef(regression_sig), confint(regression_sig)))
 summary(odd_ratios_95CI)
 #score test data set
-test$m1_score <- predict(regression3,type='response',test)
+test$m1_score <- predict(regression_sig,type='response',test)
 m1_pred <- prediction(test$m1_score, test$good_bad_21)
 m1_perf <- performance(m1_pred,"tpr","fpr")
 
@@ -247,6 +255,7 @@ plot(m1_perf, lwd=2, colorize=TRUE, main="ROC m1: Logistic Regression Performanc
 lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
 lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
 
+####CONFUSION MATRIX
 # Plot precision/recall curve
 m1_perf_precision <- performance(m1_pred, measure = "prec", x.measure = "rec")
 
@@ -287,7 +296,6 @@ lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
 # Plot precision/recall curve
 m2_perf_precision <- performance(m2_pred, measure = "prec", x.measure = "rec")
 plot(m2_perf_precision, main="m2 Recursive Partitioning:Precision/recall curve")
-
 
 # Plot accuracy as function of threshold
 m2_perf_acc <- performance(m2_pred, measure = "acc")
