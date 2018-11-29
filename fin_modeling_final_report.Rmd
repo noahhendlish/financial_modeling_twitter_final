@@ -1,9 +1,40 @@
+---
+title: "Financial Modeling Final Project"
+author: "Noah Hendlish, Aaron Rabinovich, Charlie Hoffman, Matt Reisin"
+date: "11/29/2018"
+output: word_document
+---
+
+
 #Twitter Malicious Tweets Data Analysis
 #Noah Hendlish
 #FINAL PROJECT: CLASSIFICATION OF MISINFORMATION CAMPAIGN BOTS
-install.packages(c('data.table','stringr','lars','glmnet','DT', 'lattice','knitr' ,'ClustOfVar','ape','Information','ROCR','caret','rpart','rpart.utils','rpart.plot','randomForest','party','bnlearn','DAAG','vcd','kernlab')); #if you have not already installed these packages
-install.packages('rapportools')
-install.packages("rmarkdown")
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rmarkdown)
+#render("/final_fin_modeling_R_report.Rmd", pdf_document())
+#MS Word
+help(rmarkdown)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+#SETUP ENVIROMENT
+```{r enviromeent setup, echo=FALSE}
+#install.packages(c('data.table','stringr','lars','glmnet','DT', 'lattice','knitr' ,'ClustOfVar','ape','Information','ROCR','caret','rpart','rpart.utils','rpart.plot','randomForest','party','bnlearn','DAAG','vcd','kernlab')); #if you have not already installed these packages
+#install.packages('rapportools')
+#install.packages("rmarkdown")
+#install.packages("corrplot")
+#install.packages("heuristica")
+library(rpart)
+library(kernlab) #for SVM..always explore the library!
+library(corrplot)
+library(caret)
+library(heuristica)
 library(rmarkdown)
 library(rapportools)
 library(stats)
@@ -30,7 +61,12 @@ library(DAAG)        # Data Analysis and Graphics Data and Functions
 library(vcd)         # Visualizing Categorical Data
 library(kernlab)     # Support Vector Machine
 library(stringr)
+```
 
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+##SAMPLING, BASIC DATA ANALYSIS
+```{r sampling}
+#BASIC ENVIROMENT SET UP (READ IN CSVS AND SET UP DATA FRAMES)
 #In this all data set any variable that starts with "is" --> binary (0 or 1): 1 --> true, 0--> false
 #to classify as factors: "account_language", "tweet_language", "tweet_client"
 #as.factor(all_tweets$account_language)
@@ -185,11 +221,7 @@ sapply(all_tweets_final,function(x) sum(x == 'other'))
 sapply(all_tweets_final,function(x) sum(x == 'Other'))
 sapply(all_tweets_final, function(x) length(unique(x)))
 sapply(all_tweets_final, sd)
-install.packages("corrplot")
-install.packages("heuristica")
-library(corrplot)
-library(caret)
-library(heuristica)
+
 #corrplot(all_tweets_final, method = 'shade')
 #rquery.cormat(all_tweets_final)
 #rquery.cormat(all_tweets_final, type="upper")
@@ -226,27 +258,32 @@ non_malicious_in_test<- subset(x=train, train$malicious ==0)
 malicious_in_test <- subset(x=train, train$malicious ==1)
 percent_of_malicious_in_test = nrow(malicious_in_test)/nrow(test)
 summary(div_part)
+
+```
+
+###LOGISTIC REGRESSION
+```{r log regression}
 ##get samples with same % of malicious in test as in train (~16.5%)--> which is consistent with population
 # Model: Stepwise Logistic Regression Model  # Model: Stepwise Logistic Regression Model  # Model: Stepwise Logistic Regression Model# Model: Stepwise Logistic Regression Model
 #malicious~.
 ########LOGISTIC REGRESSION #########
 help(glm)
 regression1 <-glm(malicious~.,data=train_all,family=binomial())
-regression2 <- glm(malicious~  tweet_client+follower_count+following_count+is_reply+is_quote +is_Retweet +retweet_count+like_count+user_has_reported_location+acct_tweet_lang_same+tweet_lang_english+tweet_lang_russian+num_hashtags+ num_urls+num_user_mentions+diff_tweet_acct_creation_time,data=train,family=binomial())
-regression3 <- glm(malicious~  tweet_client+follower_count+following_count+is_reply+is_quote +is_Retweet +retweet_count+like_count+user_has_reported_location+acct_tweet_lang_same+tweet_language+num_hashtags+ num_urls+num_user_mentions+diff_tweet_acct_creation_time,data=train,family=binomial())
-regression4 <- glm(malicious~  follower_count+following_count+is_reply+is_quote +is_Retweet +retweet_count+like_count+user_has_reported_location+acct_tweet_lang_same+tweet_lang_english+tweet_lang_russian+num_hashtags+ num_urls+num_user_mentions+diff_tweet_acct_creation_time,data=train,family=binomial())
+#regression2 <- glm(malicious~  tweet_client+follower_count+following_count+is_reply+is_quote +is_Retweet +retweet_count+like_count+user_has_reported_location+acct_tweet_lang_same+tweet_lang_english+tweet_lang_russian+num_hashtags+ num_urls+num_user_mentions+diff_tweet_acct_creation_time,data=train,family=binomial())
+#regression3 <- glm(malicious~  tweet_client+follower_count+following_count+is_reply+is_quote +is_Retweet +retweet_count+like_count+user_has_reported_location+acct_tweet_lang_same+tweet_language+num_hashtags+ num_urls+num_user_mentions+diff_tweet_acct_creation_time,data=train,family=binomial())
+#regression4 <- glm(malicious~  follower_count+following_count+is_reply+is_quote +is_Retweet +retweet_count+like_count+user_has_reported_location+acct_tweet_lang_same+tweet_lang_english+tweet_lang_russian+num_hashtags+ num_urls+num_user_mentions+diff_tweet_acct_creation_time,data=train,family=binomial())
 regression_sig <-glm(malicious~.,data=train,family=binomial())
 m1 <-glm(malicious~.,data=train,family=binomial())
 summary(m1)
-summary(regression1)
-summary(regression2)
-summary(regression3)
-summary(regression4)
+#summary(regression1)
+#summary(regression2)
+#summary(regression3)
+#summary(regression4)
 summary(regression_sig)
 help(anova)
 anova(regression_sig, test="Chisq")
 #likelihood_ratio:
-anova(regression_sig, test="rao")
+#anova(regression_sig, test="rao")
 
 # List of significant variables and features with p-value <0.01
 significant.variables <- summary(regression_sig)$coeff[-1,4] < 0.01
@@ -288,12 +325,13 @@ m1_perf_precision <- performance(m1_pred, measure = "prec", x.measure = "rec")
 plot(m1_perf_precision, main="m1 Logistic:Precision/recall curve")
 #confusionMatrix(m1_pred, m1_perf)
 #confusionMatrix(factor(m1_pred),factor(m1_perf_precision))
+```
 
+
+##PARTITIONING
+```{r (test/train)}
 ### Partitioning ######## Partitioning ######## Partitioning ######## Partitioning ######## Partitioning #####
-
 #Basic recursive partitioning
-library(rpart)
-library(kernlab) #for SVM..always explore the library!
 #test1 <- na.exclude(test)
 #train1 <- na.exclude(train)
 train_numeric = train
@@ -315,6 +353,10 @@ train_factor1 <- na.omit(train_factor)
 test_factor1 <- as.factor(test_factor1)
 train_factor1 <- as.factor(train_factor1)
 
+```
+
+###TREES (RANDOM FORESTS)
+```{r}
 m2 <- rpart(malicious~.,data=train)
 #m2_a <- rpart(malicious~.,data=train)
 m2_b <- rpart(malicious~.,data=train_factor)
@@ -329,7 +371,7 @@ plot(m2, main="Tree:Recursive Partitioning");text(m2)
 
 # Better version of plot
 prp(m2,type=2,extra=1,  main="Tree:Recursive Partitioning")
-prp(m2_a,type=2,extra=1,  main="Tree:Recursive Partitioning")
+#prp(m2_a,type=2,extra=1,  main="Tree:Recursive Partitioning")
 # score test data
 test2 <- na.omit(test)
 #test$m2_score1 <- predict(m2, test_factor1, type='prob')
@@ -366,7 +408,7 @@ cat("AUROC: ",m2_AUROC,"\tKS: ", m2_KS, "\tGini:", m2_Gini, "\n")
 #m2_1 <- rpart(malicious~.,data=train,parms=list(prior=c(.7,.3)),cp=.0002)  #- build model using 70%-30% priors    ## Provide priors to a bayesian model  ## Notice, this are the correct priors
 #### m2_1 <- rpart(good_bad_21~.,data=train_1,parms=list(prior=c(.75,.25)),cp=.0002) #- build model using 75%-25% priors
 #m2_1 <- rpart(malicious~.,data=train_1,parms=list(prior=c(.6,.4)),cp=.0002) #- build model using 60%-40% priors
-m2_1 <- rpart(malicious~.,data=train_1,parms=list(prior=c(.83,.17)),cp=.0002) #- build model using 60%-40% priors
+m2_1 <- rpart(malicious~.,data=train,parms=list(prior=c(.83,.17)),cp=.0002) #- build model using 60%-40% priors
 
 # Print tree detail
 printcp(m2_1)
@@ -498,9 +540,9 @@ bn.gs <- gs(train_2_1)
 bn.gs
 bn2 <- iamb(train_2_1)
 bn2
-bn3 <- fast.iamb(train_2_1)
-bn3
-bn4 <- inter.iamb(train_2_1)
+#bn3 <- fast.iamb(train_2_1)
+#bn3
+#bn4 <- inter.iamb(train_2_1)
 
 ######HILL CLIMBING ######
 compare(bn.gs, bn2)
@@ -514,7 +556,7 @@ compare(bn.gs, bn2)
 #train_2_2$diff_tweet_acct_creation_time, train_2_2$malicious
 names(train)
 train_2_2 <- train_2
-train_2_2 <-subset(x = train_2, select = c(3,4,5,6,7,8,9,10,11,12,13,14,15))
+train_2_2 <- subset(x = train_2, select = c(3,4,5,6,7,8,9,10,11,12,13,14,15))
 names(train_2_2)
 train_2_2$follower_count <- as.numeric(train_2_2$follower_count)
 train_2_2$following_count <- as.numeric(train_2_2$following_count)
@@ -528,17 +570,21 @@ train_2_2$is_quote <- as.numeric(train_2_2$is_quote)
 train_2_2$is_Retweet <- as.numeric(train_2_2$is_Retweet)
 train_2_2$user_has_reported_location <- as.numeric(train_2_2$user_has_reported_location)
 train_2_2$acct_tweet_lang_same <- as.numeric(train_2_2$acct_tweet_lang_same)
-train_2_2$diff_tweet_acct_creation_time <- as.numeric(train_2_2$diff_tweet_acct_creation_time)
+#train_2_2$diff_tweet_acct_creation_time <- as.numeric(train_2_2$diff_tweet_acct_creation_time)
 train_2_2 <- na.omit(train_2_2)
-bn.hc <- hc(train_2_2, score = "aic")
+#bn.hc <- hc(train_2_2, score = "aic")
 #only works with discrete data... doesnt work.
-bn.hc
-opm5<-par(mfrow = c(1,2))
-plot(bn.gs, main = "Constraint-based algorithms")
-plot(bn.hc, main = "Hill-Climbing")
-res2 = hc(train_2)
-fitted2 = bn.fit(res2, train_2)
-fitted2
+#bn.hc
+#opm5<-par(mfrow = c(1,2))
+#plot(bn.gs, main = "Constraint-based algorithms")
+#plot(bn.hc, main = "Hill-Climbing")
+#res2 = hc(train_2)
+#fitted2 = bn.fit(res2, train_2)
+#fitted2
+```
+
+
+```{r SVM}
 
 ##########SVM#############
 library(kernlab) #for SVM..always explore the library!
@@ -553,7 +599,7 @@ test_sample<-test[test_sample_index,]
 help(ksvm)
 m3 <- ksvm(malicious ~., data = train_sample, kernel = "vanilladot", na.action = na.omit)
 test2 <- na.omit(test_sample)
-test2$m3_score <- predict(m3, test2[,1:22], type="response")
+test2$m3_score <- predict(m3, test2, type="response")
 #m7_1_pred <- predict(m7_1, test[,1:10], type="response")
 m3_pred <- prediction(test2$m3_score, test2$malicious)
 m3_perf <- performance(m3_pred,"tpr","fpr")
@@ -565,7 +611,7 @@ lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
 lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
 
 ###### Random forrest 2#####
-library(party)
+#library(party)
 #set.seed(123456742)
 #m4 <- cforest(malicious~., data = train_sample, control = cforest_unbiased(mtry = 2, ntree = 50))
 #m4_fitForest <- predict(m4, newdata = test_sample)
@@ -577,10 +623,7 @@ library(party)
 #plot(m4_perf,colorize=TRUE, lwd=2, main = "m3 ROC: Random Forest", col = "blue")
 #lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
 #lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
-library(rmarkdown)
-render("/final_fin_modeling_R_report.Rmd", pdf_document())
-#MS Word
-help(rmarkdown)
+
 
 ######DATA ANALYSIS AND BIVARIATE ANALYSIS#######
 op <- par(mfrow=c(1,2), new=TRUE)
@@ -635,10 +678,10 @@ plot(as.phylo(tweets_quali_cluster_tree), type = "fan",
 		 edge.color = hsv(runif(10, 0.65, 0.75), 1, 1, 0.7), 
 		 edge.width = runif(20,  0.5, 3), use.edge.length = TRUE, col = "gray80")
 summary.phylo(as.phylo(tweets_quali_cluster_tree))
-stab_quali<-stability(tweets_quali_cluster_tree,B=50) # Bootstrap 50 times
+#stab_quali<-stability(tweets_quali_cluster_tree,B=50) # Bootstrap 50 times
 # plot(stab,main="Stability of the partitions")
-boxplot(stab_quali$matCR)
-part_quali<-cutreevar(tweets_quali_cluster_tree,10)
+#boxplot(stab_quali$matCR)
+part_quali<-cutreevar(tweets_quali_cluster_tree,3)
 print(part_quali)
 summary(part_quali)
 #quantitative
@@ -647,10 +690,10 @@ plot(as.phylo(tweets_quanti_cluster_tree), type = "fan",
 		 edge.color = hsv(runif(10, 0.65, 0.75), 1, 1, 0.7), 
 		 edge.width = runif(20,  0.5, 3), use.edge.length = TRUE, col = "gray80")
 summary.phylo(as.phylo(tweets_quanti_cluster_tree))
-stab_quanti<-stability(tweets_quanti_cluster_tree,B=50) # Bootstrap 50 times
+#stab_quanti<-stability(tweets_quanti_cluster_tree,B=50) # Bootstrap 50 times
 # plot(stab,main="Stability of the partitions")
-boxplot(stab_quanti$matCR)
-part_quanti<-cutreevar(tweets_quanti_cluster_tree,10)
+#boxplot(stab_quanti$matCR)
+part_quanti<-cutreevar(tweets_quanti_cluster_tree,4)
 print(part_quanti)
 summary(part_quanti)
 #plot(tweets_quanti_cluster_tree, as.factor(kfit_quanti$cluster), type = "index")
@@ -667,11 +710,11 @@ summary(part_quanti)
 #kfit_quali$E
 #quantitative
 #kfit_quanti<-kmeansvar( X.quanti = all_tweets_quanti, init=5, iter.max = 150, nstart = 1, matsim = TRUE)
-kfit_quanti<-kmeansvar( X.quanti = all_tweets_quanti, init = 5, iter.max = 150, nstart= 1, matsim = TRUE)
-summary(kfit_quanti)
-plot(all_tweets_quanti, as.factor(kfit_quanti$cluster))
-kfit_quanti$E
-
+###KFIT QUANTI
+#kfit_quanti<-kmeansvar( X.quanti = all_tweets_quanti, init = 5, iter.max = 150, nstart= 1, matsim = TRUE)
+#summary(kfit_quanti)
+#plot(all_tweets_quanti, as.factor(kfit_quanti$cluster))
+#kfit_quanti$E
 hist(all_tweets$follower_count)
 hist(all_tweets$following_count)
 hist(all_tweets$is_reply)
@@ -696,7 +739,7 @@ hist(all_tweets$diff_tweet_acct_creation_time)
 
 #hist(all_tweets_testing[all_tweets_testing$tweet_lang_english == 1,]$malicious, breaks =2)
 #hist(all_tweets_testing[all_tweets_testing$tweet_lang_russian == 1,]$malicious, breaks =2)
-par(mfrow=c(1,1))
+#par(mfrow=c(1,1))
 #boxplot(all_tweets[all_tweets$tweet_lang_english == 1,]$malicious,all_tweets[all_tweets$tweet_lang_english == 0,]$malicious,
 #all_tweets[all_tweets$tweet_lang_russian == 1,]$malicious,all_tweets[all_tweets$tweet_lang_russian == 0,]$malicious)
 
@@ -706,18 +749,18 @@ op2<-par(mfrow=c(1,2))
 boxplot(all_tweets_testing$follower_count, ylab="Follower Count", main="Boxplot: Follower Count")
 #plot(as.factor(all_tweets_testing$follower_count), all_tweets_testing$malicious, ylab="Malicious-NonMalicious", xlab="Follower Count", main="Follower Count (Before Groupping)")
 plot(as.factor(all_tweets_testing$follower_count), all_tweets_testing$malicious, ylab="Malicious-NonMalicious", xlab="Follower Count", main="Follower Count (After Groupping)")
-follower_count1 = mnpct(all_tweets_testing$follower_count)
+#follower_count1 = mnpct(all_tweets_testing$follower_count)
 #follower_count1$Good_pct
-sum(is.na(all_tweets_testing$follower_count))
-barplot(follower_count1$WOE, col="brown", names.arg=c(follower_count1$Levels), 
-				main="Score:Follower Count",
-				xlab="Category",
-				ylab="WOE")
+#sum(is.na(all_tweets_testing$follower_count))
+#barplot(follower_count1$WOE, col="brown", names.arg=c(follower_count1$Levels), 
+#				main="Score:Follower Count",
+#				xlab="Category",
+#				ylab="WOE")
 
-barplot(follower_count1$IV, col="brown", names.arg=c(follower_count1$Levels), 
-				main="Score:Follower Count",
-				xlab="Category",
-				ylab="IV")
+#barplot(follower_count1$IV, col="brown", names.arg=c(follower_count1$Levels), 
+#				main="Score:Follower Count",
+#				xlab="Category",
+#				ylab="IV")
 
-
+```
 
