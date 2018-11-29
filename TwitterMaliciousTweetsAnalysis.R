@@ -140,7 +140,9 @@ all_tweets$tweet_client <-as.factor(ifelse(all_tweets$tweet_client=='Twitter Web
 																										 			 			 			 			 			 			 			 			 			 			 ifelse(all_tweets$tweet_client=='Facebook','Facebook',
 																										 			 			 			 			 			 			 			 			 			 			 			 ifelse(all_tweets$tweet_client=='Google','Google',
 																										 			 			 			 			 			 																																			'Other'))))))))))))))
-
+#all_tweets <- na.omit(all_tweets)
+#train <-na.omit(train)
+#test <-na.omit(test)
 #split data sets into qualitative and quantitative
 quanti_headers = c("follower_count" ,"following_count",
 									 "is_reply",  "is_quote","is_Retweet", "retweet_count", "like_count","user_has_reported_location", 
@@ -169,16 +171,32 @@ all_tweets_final <- data.frame(all_tweets$account_language, all_tweets$tweet_lan
 colnames(all_tweets_quali) <-quali_headers
 colnames(all_tweets_quanti) <- quanti_headers
 colnames(all_tweets_final) <- all_final_headers
+str(all_tweets_final)
+
 non_malicious_in_total_set <- subset(x=all_tweets_final, all_tweets_final$malicious ==0)
 malicious_in_total_set <- subset(x=all_tweets_final, all_tweets_final$malicious == 1)
 percent_of_malicious_in_total_set= nrow(malicious_in_total_set)/nrow(all_tweets_final)
+#######BASIC ANALYSIS##########
 sapply(all_tweets_final,function(x) sum(x == 'international/unkown'))
 sapply(all_tweets_final,function(x) sum(x == 'undefined'))
 sapply(all_tweets_final,function(x) sum(x == 'other'))
 sapply(all_tweets_final,function(x) sum(x == 'Other'))
 sapply(all_tweets_final, function(x) length(unique(x)))
 sapply(all_tweets_final, sd)
+install.packages("corrplot")
+install.packages("heuristica")
+library(corrplot)
+library(caret)
+library(heuristica)
+#corrplot(all_tweets_final, method = 'shade')
+#rquery.cormat(all_tweets_final)
+#rquery.cormat(all_tweets_final, type="upper")
+#rquery.cormat(all_tweets_final, type="full")
+#col<- colorRampPalette(c("blue", "white", "red"))(20)
+#cormat<-rquery.cormat(mydata, type="full", col=col)
+#cormat<-rquery.cormat(mydata, graphType="heatmap")
 
+names(all_tweets_final)
 #ONLY TAKE SIGNIFICGANT VARIABLES (COLUMNS)
 all_tweets_sig = all_tweets_final[c(1:nrow(all_tweets_final)),c(2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,19)]
 ######### Sampling  ##################### Sampling  ##################### Sampling  ############
@@ -194,29 +212,30 @@ percent_of_malicious_in_set= nrow(malicious_in_set)/nrow(all_tweets_final)
 #div_part <- sort(sample(nrow(all_tweets_final), nrow(all_tweets_final)))  ## sample from total rows, a fraction
 div_part <- sort(sample(nrow(all_tweets_final), nrow(all_tweets_final)*.5))
 #select training sample 
-train<-all_tweets_final[div_part,] # 70% here
-train_sig <- all_tweets_final[div_part,c(2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,19)]
-colnames(train)<- all_final_headers
+train_all<-all_tweets_final[div_part,] # 70% here
+train <- all_tweets_final[div_part,c(2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,19)]
 non_malicious_in_train <- subset(x=train, train$malicious ==0)
 malicious_in_train <- subset(x=train, train$malicious ==1)
 percent_of_malicious_in_train = nrow(malicious_in_train)/nrow(train)
 # put remaining into test sample
-test<-all_tweets_final[-div_part,] # rest of the 30% data goes here
-test_sig <- all_tweets_final[-div_part,c(2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,19)]
+test_all<-all_tweets_final[-div_part,] # rest of the 30% data goes here
+test <- all_tweets_final[-div_part,c(2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,19)]
 non_malicious_in_test<- subset(x=train, train$malicious ==0)
-colnames(test)<- all_final_headers
 malicious_in_test <- subset(x=train, train$malicious ==1)
 percent_of_malicious_in_test = nrow(malicious_in_test)/nrow(test)
 summary(div_part)
 ##get samples with same % of malicious in test as in train (~16.5%)--> which is consistent with population
 # Model: Stepwise Logistic Regression Model  # Model: Stepwise Logistic Regression Model  # Model: Stepwise Logistic Regression Model# Model: Stepwise Logistic Regression Model
 #malicious~.
+########LOGISTIC REGRESSION #########
 help(glm)
-regression1 <-glm(malicious~.,data=train,family=binomial())
+regression1 <-glm(malicious~.,data=train_all,family=binomial())
 regression2 <- glm(malicious~  tweet_client+follower_count+following_count+is_reply+is_quote +is_Retweet +retweet_count+like_count+user_has_reported_location+acct_tweet_lang_same+tweet_lang_english+tweet_lang_russian+num_hashtags+ num_urls+num_user_mentions+diff_tweet_acct_creation_time,data=train,family=binomial())
 regression3 <- glm(malicious~  tweet_client+follower_count+following_count+is_reply+is_quote +is_Retweet +retweet_count+like_count+user_has_reported_location+acct_tweet_lang_same+tweet_language+num_hashtags+ num_urls+num_user_mentions+diff_tweet_acct_creation_time,data=train,family=binomial())
 regression4 <- glm(malicious~  follower_count+following_count+is_reply+is_quote +is_Retweet +retweet_count+like_count+user_has_reported_location+acct_tweet_lang_same+tweet_lang_english+tweet_lang_russian+num_hashtags+ num_urls+num_user_mentions+diff_tweet_acct_creation_time,data=train,family=binomial())
 regression_sig <-glm(malicious~.,data=train_sig,family=binomial())
+m1 <-glm(malicious~.,data=train_sig,family=binomial())
+summary(m1)
 summary(regression1)
 summary(regression2)
 summary(regression3)
@@ -246,9 +265,15 @@ odd_ratios_95CI = exp(cbind(OR = coef(regression_sig), confint(regression_sig)))
 summary(odd_ratios_95CI)
 #score test data set
 test$m1_score <- predict(regression_sig,type='response',test)
-m1_pred <- prediction(test$m1_score, test$good_bad_21)
+m1_pred <- prediction(test$m1_score, test$malicious)
 m1_perf <- performance(m1_pred,"tpr","fpr")
-
+#wald test
+#wald.test(b = coef(mylogit), Sigma = vcov(mylogit), Terms = 4:6)
+#exp(coef(mylogit))
+#exp(cbind(OR = coef(mylogit), confint(mylogit)))
+#newdata1 <- with(mydata, data.frame(gre = mean(gre), gpa = mean(gpa), rank = factor(1:4)))
+#newdata1$rankP <- predict(mylogit, newdata = newdata1, type = "response")
+#https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/
 #ROC
 par(mfrow=c(1,1))
 plot(m1_perf, lwd=2, colorize=TRUE, main="ROC m1: Logistic Regression Performance")
@@ -258,8 +283,9 @@ lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
 ####CONFUSION MATRIX
 # Plot precision/recall curve
 m1_perf_precision <- performance(m1_pred, measure = "prec", x.measure = "rec")
-
 plot(m1_perf_precision, main="m1 Logistic:Precision/recall curve")
+#confusionMatrix(m1_pred, m1_perf)
+#confusionMatrix(factor(m1_pred),factor(m1_perf_precision))
 
 ### Partitioning ######## Partitioning ######## Partitioning ######## Partitioning ######## Partitioning #####
 ### Partitioning ######## Partitioning ######## Partitioning ######## Partitioning ######## Partitioning #####
@@ -267,28 +293,30 @@ plot(m1_perf_precision, main="m1 Logistic:Precision/recall curve")
 ### Partitioning ######## Partitioning ######## Partitioning ######## Partitioning ######## Partitioning #####
 
 #Basic recursive partitioning
-
 library(rpart)
+library(kernlab) #for SVM..always explore the library!
 
-m2 <- rpart(good_bad_21~.,data=train)
+m2 <- rpart(malicious~.,data=train)
+m2_a <- rpart(malicious~.,data=train_sig)
 
 # Print tree detail
 printcp(m2)
-
+printcp(m2_a)
 # Tree plot
 plot(m2, main="Tree:Recursive Partitioning");text(m2)
-#correlation matrix######################88888
+plot(m2_a, main="Tree:Recursive Partitioning");text(m2_a)
 # Better version of plot
 prp(m2,type=2,extra=1,  main="Tree:Recursive Partitioning")
-
+prp(m2_a,type=2,extra=1,  main="Tree:Recursive Partitioning")
 # score test data
-test$m2_score <- predict(m2,type='prob',test)
-
-m2_pred <- prediction(test$m2_score[,2],test$good_bad_21)
-
+test2 <- na.omit(test)
+#test$m2_score <- predict(m2, test, type='prob')
+test$m2_score <- predict(m2, test, type='vector')
+#m2_pred <- prediction(test$m2_score[,2],test$malicious)
+m2_pred <- prediction(test$m2_score,test$malicious)
 m2_perf <- performance(m2_pred,"tpr","fpr")
 
-# MOdel performance plot
+### MOdel performance plot ###
 plot(m2_perf, lwd=2, colorize=TRUE, main="ROC m2: Traditional Recursive Partitioning")
 lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
 lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
@@ -308,30 +336,31 @@ m2_Gini <- (2*m2_AUROC - 100)
 cat("AUROC: ",m2_AUROC,"\tKS: ", m2_KS, "\tGini:", m2_Gini, "\n")
 
 
-## Bayesian Partitioning
-
-
+#### Bayesian Partitioning ####
+train_1 = train
 # Fit Model 
 #### m2_1 <- rpart(good_bad_21~.,data=train_1,parms=list(prior=c(.9,.1)),cp=.0002) #- build model using 90%-10% priors
 # m2_1 <- rpart(good_bad_21~.,data=train_1,parms=list(prior=c(.8,.2)),cp=.0002) #- build model using 80%-20% priors
-####m2_1 <- rpart(good_bad_21~.,data=train,parms=list(prior=c(.7,.3)),cp=.0002)  #- build model using 70%-30% priors    ## Provide priors to a bayesian model  ## Notice, this are the correct priors
+#m2_1 <- rpart(malicious~.,data=train,parms=list(prior=c(.7,.3)),cp=.0002)  #- build model using 70%-30% priors    ## Provide priors to a bayesian model  ## Notice, this are the correct priors
 #### m2_1 <- rpart(good_bad_21~.,data=train_1,parms=list(prior=c(.75,.25)),cp=.0002) #- build model using 75%-25% priors
-# m2_1 <- rpart(good_bad_21~.,data=train_1,parms=list(prior=c(.6,.4)),cp=.0002) #- build model using 60%-40% priors
+#m2_1 <- rpart(malicious~.,data=train_1,parms=list(prior=c(.6,.4)),cp=.0002) #- build model using 60%-40% priors
+m2_1 <- rpart(malicious~.,data=train_1,parms=list(prior=c(.83,.17)),cp=.0002) #- build model using 60%-40% priors
 
 # Print tree detail
 printcp(m2_1)
 
-# plot trees
-plot(m2_1, main="m2_1-Recursive Partitioning - Using Bayesian N 70%-30%");text(m2_1)
-
-prp(m2_1,type=2,extra=1, main="m2_1-Recursive Partitioning - Using Bayesian N 70%-30%")
-
-test$m2_1_score <- predict(m2_1,type='prob',test)
-m2_1_pred <- prediction(test$m2_1_score[,2],test$good_bad_21)
+help(prediction)
+# plot trees 
+plot(m2_1, main="m2_1-Recursive Partitioning - Using Bayesian N 83%-17%");text(m2_1)
+prp(m2_1,type=2,extra=1, main="m2_1-Recursive Partitioning - Using Bayesian N 83%-17%")
+#test$m2_1_score <- predict(m2_1,type='prob',test)
+test$m2_1_score <- predict(m2_1,type='vector',test)
+#m2_1_pred <- prediction(test$m2_1_score[,2],test$malicious)
+m2_1_pred <- prediction(test$m2_1_score,test$malicious)
 m2_1_perf <- performance(m2_1_pred,"tpr","fpr")
 
 # MOdel performance plot
-plot(m2_1_perf, colorize=TRUE, main="ROC m2_1: Recursive Partitioning - Using Bayesian N 70%-30%")
+plot(m2_1_perf, colorize=TRUE, main="ROC m2_1: Recursive Partitioning - Using Bayesian N 83%-17%")
 lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
 lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
 
@@ -349,7 +378,110 @@ legend(0.4,0.4,
 lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
 lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
 
+#################RANDOM FOREST ##################
+test2 <- na.omit(test)
+train2 <- na.omit(train)
+m3 <- randomForest(malicious ~ ., data = train2)
 
+m3_fitForest <- predict(m3, newdata = test, type="prob")[,2]
+m3_pred <- prediction( m3_fitForest, test$malicious)
+m3_perf <- performance(m3_pred, "tpr", "fpr")
+
+#plot variable importance
+varImpPlot(m3, main="Random Forest: Variable Importance")
+
+# Model Performance plot
+plot(m3_perf,colorize=TRUE, lwd=2, main = "m3 ROC: Random Forest", col = "blue")
+lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
+lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
+
+# Plot precision/recall curve
+m3_perf_precision <- performance(m3_pred, measure = "prec", x.measure = "rec")
+plot(m3_perf_precision, main="m3 Random Forests:Precision/recall curve")
+
+# Plot accuracy as function of threshold
+m3_perf_acc <- performance(m3_pred, measure = "acc")
+plot(m3_perf_acc, main="m3 Random Forests:Accuracy as function of threshold")
+
+
+#KS & AUC  m3
+m3_AUROC <- round(performance(m3_pred, measure = "auc")@y.values[[1]]*100, 2)
+m3_KS <- round(max(attr(m3_perf,'y.values')[[1]] - attr(m3_perf,'x.values')[[1]])*100, 2)
+m3_Gini <- (2*m3_AUROC - 100)
+cat("AUROC: ",m3_AUROC,"\tKS: ", m3_KS, "\tGini:", m3_Gini, "\n")
+
+## Some variants
+## Conditional random forest
+# Random forests show a bias towards correlated predictor variables.
+# We identify two mechanisms responsible for this finding: 
+# (i) A preference for the selection of correlated predictors in the tree building process and 
+# (ii) an additional advantage for correlated predictor variables induced by the unconditional permutation scheme that is employed in the computation of the variable importance measure.
+# Based on these considerations we develop a new, conditional permutation scheme for the computation of the variable importance measure.
+# The resulting conditional variable importance reflects the true impact of each predictor variable more reliably than the original marginal approach.
+## https://epub.ub.uni-muenchen.de/9387/1/techreport.pdf
+## Note how info, and packages are publicly available!!
+## Lets use this package
+library(party)
+set.seed(123456742)
+m3_1 <- cforest(good_bad_21~., control = cforest_unbiased(mtry = 2, ntree = 50), data = train)
+
+summary(m3_1)
+
+# Model Performance
+m3_1_fitForest <- predict(m3, newdata = test, type = "prob")[,2]
+m3_1_pred <- prediction(m3_1_fitForest, test$good_bad_21)
+m3_1_perf <- performance(m3_1_pred, "tpr", "fpr")
+
+# Model Performance Plot
+plot(m3_1_perf, colorize=TRUE, lwd=2, main = " m3_1 ROC: Conditional Random Forests")
+lines(x=c(0, 1), y=c(0, 1), col="red", lwd=1, lty=3);
+lines(x=c(1, 0), y=c(0, 1), col="green", lwd=1, lty=4)
+
+
+
+
+####### BAyesian Network#############
+library(bnlearn)
+train_2<-train
+train_2$duration_month_2 <- as.factor(train_2$duration_month_2)
+train_2$credit_amount_5 <- as.factor(train_2$credit_amount_5)
+train_2$instalment_pct_8 <- as.factor(train_2$instalment_pct_8)
+train_2$age_in_yrs_13 <- as.factor(train_2$age_in_yrs_13)
+
+bn.gs <- gs(train_2)
+bn.gs
+bn2 <- iamb(train_2)
+bn2
+bn3 <- fast.iamb(train_2)
+bn3
+bn4 <- inter.iamb(train_2)
+bn4
+
+compare(bn.gs, bn2)
+#On the other hand hill-climbing results in a completely directed network, which diers from
+#the previous one because the arc between A and B is directed (A ! B instead of A  B).
+bn.hc <- hc(train_2, score = "aic")
+bn.hc
+opm5<-par(mfrow = c(1,2))
+plot(bn.gs, main = "Constraint-based algorithms")
+plot(bn.hc, main = "Hill-Climbing")
+res2 = hc(train_2)
+fitted2 = bn.fit(res2, train_2)
+fitted2
+
+##########SVM#############
+
+
+
+
+
+#########NEURAL NETS#########
+
+
+
+
+
+########LASSO REGRESSION#######
 
 
 
@@ -363,7 +495,6 @@ hist(as.numeric(all_tweets$malicious), breaks =2, xlab="Non-Malicious(0) and Mal
 
 ###SKIP BIVARIATE UNTIL END
 #START ON ML: Logistic Regression, Random Forrest, SVM, Lasso
-
 eval_tweets <- function(x , y=all_tweets$malicious){
 	tb <- table(as.factor(x), as.factor(y))
 	mt <- as.matrix(tb) # x -> independent variable(vector), y->dependent variable(vector)
