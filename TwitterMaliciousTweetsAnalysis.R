@@ -540,7 +540,9 @@ fitted2
 ##########SVM#############
 library(kernlab) #for SVM..always explore the library!
 # Basic Model
-m3 <- ksvm(Survived ~ Pclass + Age + gender + SibSp + Parch + Fare + Embarked + Cabin_level, data = train, kernel = "vanilladot")
+
+help(ksvm)
+m3 <- ksvm(malicious ~., data = train, kernel = "vanilladot")
 test2 <- na.omit(test)
 test2$m3_score <- predict(m3, test2[,1:14], type="response")
 m3_pred <- prediction(test2$m3_score, test2$Survived)
